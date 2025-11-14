@@ -24,7 +24,7 @@ export class Booking {
   bookingDate: Date;
 
   @Column({ name: 'time_slot' })
-  timeSlot: string;  // '08:00-09:00'
+  timeSlot: string;  
 
   @Column({ name: 'display_time' })
   displayTime: string;
@@ -33,7 +33,7 @@ export class Booking {
   rate: number;
 
   @Column()
-  period: 'morning' | 'afternoon' | 'evening';
+  period: string;
 
   // Status
   @Column({ default: 'pending' })
@@ -50,4 +50,5 @@ export class Booking {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+  emailSent: boolean;
 }

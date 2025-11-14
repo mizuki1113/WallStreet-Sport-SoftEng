@@ -6,16 +6,16 @@ export class TimeSlot {
   id: number;
 
   @Column({ unique: true, name: 'time_range' })
-  timeRange: string; 
+  timeRange: string;  
 
   @Column({ name: 'display_time' })
-  displayTime: string; 
-
+  displayTime: string;  
+  
   @Column('decimal', { precision: 10, scale: 2 })
   rate: number;
 
   @Column()
-  period: 'morning' | 'evening' | 'afternoon';
+  period: 'morning' | 'evening';
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;

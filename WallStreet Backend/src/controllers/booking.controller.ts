@@ -61,7 +61,13 @@ export async function getAllBookings(req: Request, res: Response, next: NextFunc
       status: b.status,
       createdAt: b.createdAt instanceof Date 
         ? b.createdAt.toISOString()
-        : String(b.createdAt)
+        : String(b.createdAt),
+      transactions: b.transactions?.map(t => ({
+        id: t.id,
+        referenceNumber: t.referenceNumber,
+        screenshotPath: t.screenshotPath,
+        status: t.status
+      }))
     }));
 
     res.json(formatted);

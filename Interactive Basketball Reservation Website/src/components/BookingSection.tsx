@@ -9,6 +9,8 @@ import { Checkbox } from './ui/checkbox';
 import { Clock, Check, CalendarIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAvailableSlots, useInitiatePayment, TimeSlot } from '../api/hooks';
+import { QRCodePaymentModal } from './QRCodePaymentModal';
+import { PendingConfirmation } from './PendingConfirmation';
 
 interface BookingForm {
   name: string;
@@ -20,7 +22,7 @@ interface BookingForm {
 }
 
 export function BookingSection() {
-  const [currentStep, setCurrentStep] = useState<'calendar' | 'form' | 'confirmation' | 'receipt'>('calendar');
+  const [currentStep, setCurrentStep] = useState<'calendar' | 'form' | 'confirmation' | 'qr' | 'pending' | 'receipt'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     name: '',
@@ -31,6 +33,8 @@ export function BookingSection() {
     agreedToTerms: false
   });
   const [bookingReference, setBookingReference] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState(0);
 
   // TanStack Query Hooks
   const dateStr = selectedDate?.toISOString().split('T')[0];
@@ -57,6 +61,7 @@ export function BookingSection() {
 
   const handleConfirmBooking = async () => {
     const amount = bookingForm.timeSlot?.rate || 0;
+    setPaymentAmount(amount);
 
     try {
       const result = await initiatePayment.mutateAsync({
@@ -76,10 +81,33 @@ export function BookingSection() {
       });
 
       setBookingReference(result.bookingReference);
-      setCurrentStep('receipt');
+      setTransactionId(result.transactionId);
+      
+      // Show QR code modal instead of opening external checkout
+      setCurrentStep('qr');
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handlePaymentProofUploaded = () => {
+    // After user uploads proof, show pending screen
+    setCurrentStep('pending');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentStep('calendar');
+    setBookingForm({
+      name: '',
+      contact: '',
+      email: '',
+      date: undefined,
+      timeSlot: null,
+      agreedToTerms: false
+    });
+    setSelectedDate(undefined);
+    setBookingReference('');
+    setTransactionId('');
   };
 
   const formatDate = (date: Date | undefined) => {
@@ -199,7 +227,10 @@ export function BookingSection() {
 
         {/* Booking Interface */}
         <div className="max-w-6xl mx-auto">
-          {currentStep === 'calendar' && (
+          {/* Only show booking steps when not in QR or Pending */}
+          {currentStep !== 'qr' && currentStep !== 'pending' && (
+            <>
+              {currentStep === 'calendar' && (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr,2fr] gap-6">
               {/* Calendar */}
               <Card className="bg-black/50 backdrop-blur-md border-purple-500/30">
@@ -214,7 +245,7 @@ export function BookingSection() {
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
-                    disabled={(date: Date) => date < new Date()}
+                    disabled={(date: Date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     className="w-full rounded-md border border-purple-500/30 bg-black/30 text-white"
                   />
                 </CardContent>
@@ -264,17 +295,8 @@ export function BookingSection() {
                               <div className="text-xs text-gray-400">PHP {slot.rate}/hour</div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge 
-                                variant={
-                                  slot.period === 'evening' ? 'destructive' : 
-                                  slot.period === 'afternoon' ? 'default' : 
-                                  'secondary'
-                                } 
-                                className="text-xs"
-                              >
-                                {slot.period === 'evening' ? 'Premium' : 
-                                slot.period === 'afternoon' ? 'Standard' : 
-                                'Standard'}
+                              <Badge variant={slot.period === 'evening' ? 'destructive' : 'secondary'} className="text-xs">
+                                {slot.period === 'evening' ? 'Premium' : 'Standard'}
                               </Badge>
                               {slot.available ? (
                                 <span className="text-green-400 text-xs">Available</span>
@@ -355,7 +377,7 @@ export function BookingSection() {
                   <Checkbox
                     id="terms"
                     checked={bookingForm.agreedToTerms}
-                    onCheckedChange={(checked: boolean | "indeterminate") => setBookingForm(prev => ({ ...prev, agreedToTerms: checked as boolean }))}
+                    onCheckedChange={(checked: boolean) => setBookingForm(prev => ({ ...prev, agreedToTerms: checked }))}
                   />
                   <Label htmlFor="terms" className="text-white text-sm">
                     I agree to the Terms and Conditions of WallStreet Sport.
@@ -366,7 +388,7 @@ export function BookingSection() {
                   <Button
                     onClick={() => setCurrentStep('calendar')}
                     variant="outline"
-                    className="flex-1 bg-black text-white hover:bg-gray-800"
+                    className="flex-1 bg-black border-gray-600 text-white hover:bg-gray-800"
                   >
                     Back
                   </Button>
@@ -444,58 +466,6 @@ export function BookingSection() {
             </Card>
           )}
 
-          {currentStep === 'receipt' && (
-            <Card className="bg-black/50 backdrop-blur-md border-green-500/30 max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="text-green-400 text-center flex items-center justify-center gap-2">
-                  <Check className="w-6 h-6" />
-                  Booking Confirmed!
-                </CardTitle>
-                <p className="text-gray-300 text-center">Your payment is being processed. Reference: {bookingReference}</p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="bg-green-900/20 p-6 rounded-lg border border-green-500/30">
-                  <div className="grid gap-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Booking Reference:</span>
-                      <span className="text-pink-400 font-bold">{bookingReference}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Date:</span>
-                      <span className="text-white font-bold">{formatDate(bookingForm.date)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Time:</span>
-                      <span className="text-white font-bold">{bookingForm.timeSlot?.displayTime}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Amount:</span>
-                      <span className="text-green-400 font-bold">PHP {bookingForm.timeSlot?.rate}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => {
-                    setCurrentStep('calendar');
-                    setBookingForm({
-                      name: '',
-                      contact: '',
-                      email: '',
-                      date: undefined,
-                      timeSlot: null,
-                      agreedToTerms: false
-                    });
-                    setSelectedDate(undefined);
-                  }}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
-                >
-                  Book Another Slot
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Continue Button for Calendar Step */}
           {currentStep === 'calendar' && selectedDate && bookingForm.timeSlot && (
             <div className="text-center mt-8">
@@ -507,7 +477,30 @@ export function BookingSection() {
               </Button>
             </div>
           )}
+            </>
+          )}
+
+          {/* Pending Confirmation Screen */}
+          {currentStep === 'pending' && (
+            <PendingConfirmation
+              bookingReference={bookingReference}
+              email={bookingForm.email}
+              onBackToHome={handleBackToHome}
+            />
+          )}
+
+          {/* Continue Button for Calendar Step - REMOVED duplicate */}
         </div>
+
+        {/* QR Code Payment Modal */}
+        <QRCodePaymentModal
+          isOpen={currentStep === 'qr'}
+          onClose={() => setCurrentStep('confirmation')}
+          onBack={() => setCurrentStep('confirmation')}
+          amount={paymentAmount}
+          transactionId={transactionId}
+          onSuccess={handlePaymentProofUploaded}
+        />
       </div>
     </section>
   );

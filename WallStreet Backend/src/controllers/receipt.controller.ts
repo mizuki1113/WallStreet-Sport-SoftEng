@@ -30,6 +30,7 @@ export async function generateReceipt(req: Request, res: Response, next: NextFun
 
     // Receipt Details
     doc.font('Helvetica-Bold').fontSize(12).text(`Receipt #: ${booking.bookingReference}`);
+    doc.font('Helvetica');
     doc.moveDown();
     
     doc.fontSize(10);

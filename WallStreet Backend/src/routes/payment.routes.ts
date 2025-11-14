@@ -1,5 +1,15 @@
 import { Router } from 'express';
-import { initiatePayment, webhookHandler, getTransactionById } from '../controllers/payment.controller';
+import { 
+  initiatePayment, 
+  uploadPaymentProof,
+  confirmPayment,
+  downloadReceipt,
+  deleteReceipt,
+  webhookHandler, 
+  getTransactionById 
+} from '../controllers/payment.controller';
+import { upload } from '../middleware/upload';
+import { authMiddleware, adminOnly } from '../middleware/auth';
 
 const router = Router();
 
@@ -7,7 +17,7 @@ const router = Router();
  * @swagger
  * /api/payments/initiate:
  *   post:
- *     summary: Initiate GCash payment for booking
+ *     summary: Initiate QR Code payment for booking
  *     tags: [Payments]
  *     requestBody:
  *       required: true
@@ -22,9 +32,95 @@ const router = Router();
  *                 type: object
  *     responses:
  *       200:
- *         description: Payment initiated with checkout URL
+ *         description: Payment initiated, requires proof upload
  */
 router.post('/initiate', initiatePayment);
+
+/**
+ * @swagger
+ * /api/payments/upload-proof:
+ *   post:
+ *     summary: Upload payment screenshot and reference number
+ *     tags: [Payments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transactionId:
+ *                 type: string
+ *               referenceNumber:
+ *                 type: string
+ *               screenshot:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Payment proof uploaded successfully
+ */
+router.post('/upload-proof', upload.single('screenshot'), uploadPaymentProof);
+
+/**
+ * @swagger
+ * /api/payments/{transactionId}/confirm:
+ *   post:
+ *     summary: Admin confirms payment after reviewing proof
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payment confirmed and email sent
+ */
+router.post('/:transactionId/confirm', authMiddleware, adminOnly, confirmPayment);
+
+/**
+ * @swagger
+ * /api/payments/{transactionId}/download:
+ *   get:
+ *     summary: Download payment receipt screenshot
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Receipt file download
+ */
+router.get('/:transactionId/download', authMiddleware, adminOnly, downloadReceipt);
+
+/**
+ * @swagger
+ * /api/payments/{transactionId}/delete-receipt:
+ *   delete:
+ *     summary: Delete payment receipt screenshot
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Receipt deleted successfully
+ */
+router.delete('/:transactionId/delete-receipt', authMiddleware, adminOnly, deleteReceipt);
 
 /**
  * @swagger

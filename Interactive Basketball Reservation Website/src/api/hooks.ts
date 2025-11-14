@@ -11,7 +11,7 @@ export interface TimeSlot {
   displayTime: string;
   rate: number;
   available: boolean;
-  period: 'morning' | 'evening' | 'afternoon';
+  period: 'morning' | 'evening';
 }
 
 export interface BookingForm {
@@ -23,11 +23,12 @@ export interface BookingForm {
     time: string;
     displayTime: string;
     rate: number;
-    period: 'morning' | 'evening' | 'afternoon';
+    period: 'morning' | 'evening';
   };
 }
 
 export interface Booking {
+  transactions: any;
   id: string;
   customerName: string;
   email: string;
@@ -99,6 +100,7 @@ export function useCreateBooking() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to create booking');
+      return;
     }
   });
 }
@@ -113,14 +115,16 @@ export function useInitiatePayment() {
       if (data.checkoutUrl) {
         window.open(data.checkoutUrl, '_blank', 'noopener,noreferrer');
       }
-      return; 
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Payment initiation failed');
-      return;
     }
   });
 }
+
+// ============================================
+// Admin Hooks
+// ============================================
 
 export function useBookings() {
   return useQuery({
@@ -155,9 +159,11 @@ export function useUpdateBookingStatus() {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookingStats'] });
       toast.success('Booking status updated!');
+      return;
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to update booking');
+      return;
     }
   });
 }
@@ -176,6 +182,79 @@ export function useDeleteBooking() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to delete booking');
+    }
+  });
+}
+
+// ============================================
+// Payment Confirmation (Admin)
+// ============================================
+
+export function useConfirmPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transactionId: string) => {
+      const { data } = await apiClient.post(`/payments/${transactionId}/confirm`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookingStats'] });
+      toast.success('Payment confirmed and email sent!');
+      return;
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to confirm payment');
+      return;
+    }
+  });
+}
+
+export function useDownloadReceipt() {
+  return useMutation({
+    mutationFn: async (transactionId: string) => {
+      const response = await apiClient.get(`/payments/${transactionId}/download`, {
+        responseType: 'blob'
+      });
+      return response.data;
+    },
+    onSuccess: (blob, transactionId) => {
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt_${transactionId}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Receipt downloaded!');
+      return;
+    },
+    onError: (error: any) => {
+      toast.error('Failed to download receipt');
+      return;
+    }
+  });
+}
+
+export function useDeleteReceipt() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transactionId: string) => {
+      await apiClient.delete(`/payments/${transactionId}/delete-receipt`);
+      return;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      toast.success('Receipt deleted!');
+      return;
+    },
+    onError: (error: any) => {
+      toast.error('Failed to delete receipt');
+      return;
     }
   });
 }

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import routes from './routes';
 import { AppDataSource } from './ormconfig';
 import { errorHandler } from './middleware/errorHandler';
@@ -21,6 +22,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Swagger documentation
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -53,11 +58,16 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Routes
 app.use('/api', routes);
+
+// Error handler (must be last)
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 
+// Initialize database and start server
 AppDataSource.initialize()
   .then(() => {
     console.log('✅ Database connected successfully');
@@ -70,7 +80,7 @@ AppDataSource.initialize()
     });
   })
   .catch((err) => {
-    console.error('Database connection failed:', err);
+    console.error('❌ Database connection failed:', err);
     process.exit(1);
   });
 

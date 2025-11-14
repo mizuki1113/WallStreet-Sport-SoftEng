@@ -31,6 +31,19 @@ export class Transaction {
   @Column({ type: 'timestamp', name: 'payment_date', nullable: true })
   paymentDate?: Date;
 
+  // New columns for QR code payment flow
+  @Column({ name: 'reference_number', nullable: true })
+  referenceNumber?: string;
+
+  @Column({ type: 'text', name: 'screenshot_path', nullable: true })
+  screenshotPath?: string;
+
+  @Column({ name: 'verified_by', nullable: true })
+  verifiedBy?: string;
+
+  @Column({ type: 'timestamp', name: 'verified_at', nullable: true })
+  verifiedAt?: Date;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

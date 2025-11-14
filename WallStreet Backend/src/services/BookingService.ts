@@ -12,7 +12,7 @@ interface CreateBookingDTO {
     time: string;
     displayTime: string;
     rate: number;
-    period: 'morning' | 'evening';
+    period: 'morning' | 'afternoon' | 'evening';
   };
 }
 
@@ -55,7 +55,7 @@ export class BookingService {
     // Check if slot is already booked
     const existing = await this.bookingRepo.findOne({
       where: {
-        bookingDate: new Date(data.date),
+        bookingDate: new Date(data.date + 'T00:00:00'),  // Force local midnight
         timeSlot: data.timeSlot.time,
         status: 'confirmed'
       }
@@ -71,7 +71,7 @@ export class BookingService {
       customerName: data.name,
       email: data.email,
       phone: data.contact,
-      bookingDate: new Date(data.date),
+      bookingDate: new Date(data.date + 'T00:00:00'),  // Force local midnight
       timeSlot: data.timeSlot.time,
       displayTime: data.timeSlot.displayTime,
       rate: data.timeSlot.rate,
