@@ -77,11 +77,11 @@ export class EmailService {
       color: white;
     }
     .logo {
-      text-align: center;
+      text-align: left;
       margin-bottom: 20px;
     }
     .logo img {
-      max-width: 800px;
+      max-width: 600px;
       height: auto;
     }
     p {
@@ -89,8 +89,12 @@ export class EmailService {
     }
     .content {
       padding: 30px;
+      max-width: 600px;
+      height: auto;
     }
     .booking-details {
+      max-width: 580px;
+      height: auto;
       background-color: #f8f9fa;
       border-left: 4px solid #667eea;
       padding: 15px;
