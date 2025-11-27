@@ -14,18 +14,24 @@ const errorHandler_1 = require("./middleware/errorHandler");
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const app = (0, express_1.default)();
-// Middleware
+// CORS Middleware
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', process.env.FRONTEND_URL || 'http://localhost:3000'],
+    origin: "https://wallstreetsport.vercel.app",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['Authorization']
 }));
+app.options("*", (0, cors_1.default)());
+// Regular middleware
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // Serve uploaded files statically
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
+// ADD TEST ROUTE HERE - after CORS but before main routes
+app.get('/api/test-cors', (req, res) => {
+    res.json({ message: 'CORS test', timestamp: new Date() });
+});
 // Swagger documentation
 const swaggerOptions = {
     definition: {
@@ -58,9 +64,9 @@ const swaggerOptions = {
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(swaggerOptions);
 app.use('/api/docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerSpec));
-// Routes
+// Main routes
 app.use('/api', routes_1.default);
-// Error handler (must be last)
+// Error handler 
 app.use(errorHandler_1.errorHandler);
 const PORT = process.env.PORT || 4000;
 // Initialize database and start server
