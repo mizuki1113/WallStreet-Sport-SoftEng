@@ -11,14 +11,33 @@ import swaggerJsdoc from 'swagger-jsdoc';
 
 const app = express();
 
-// Middleware
+// MANUAL CORS MIDDLEWARE
+app.use((req, res, next) => {
+  // Set CORS headers for ALL responses (including errors)
+  res.header('Access-Control-Allow-Origin', 'https://wallstreetsport.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Expose-Headers', 'Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
+// keep existing cors
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', process.env.FRONTEND_URL || 'http://localhost:3000'],
+  origin: "https://wallstreetsport.vercel.app",
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Authorization']
 }));
+
+// Regular middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
