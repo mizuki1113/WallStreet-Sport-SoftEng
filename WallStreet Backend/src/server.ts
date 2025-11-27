@@ -11,28 +11,11 @@ import swaggerJsdoc from 'swagger-jsdoc';
 
 const app = express();
 
-// MANUAL CORS MIDDLEWARE
-app.use((req, res, next) => {
-  // Set CORS headers for ALL responses (including errors)
-  res.header('Access-Control-Allow-Origin', 'https://wallstreetsport.vercel.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Expose-Headers', 'Authorization');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
-
-// keep existing cors
+// CORS Middleware
 app.use(cors({
   origin: "https://wallstreetsport.vercel.app",
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Authorization']
 }));
@@ -43,6 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// ADD TEST ROUTE HERE - after CORS but before main routes
+app.get('/api/test-cors', (req, res) => {
+  res.json({ message: 'CORS test', timestamp: new Date() });
+});
 
 // Swagger documentation
 const swaggerOptions = {
@@ -78,10 +66,10 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Routes
+// Main routes
 app.use('/api', routes);
 
-// Error handler (must be last)
+// Error handler 
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
