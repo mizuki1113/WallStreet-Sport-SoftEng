@@ -61,7 +61,7 @@
       },
       "scripts": {
             "dev": "vite",
-            "build": "./node_modules/.bin/tsc && vite build",
+            "build": "/node_modules/.bin/tsc && vite build",
             "tsc": "tsc"
       }
 }
