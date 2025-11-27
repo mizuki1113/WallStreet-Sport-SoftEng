@@ -20,6 +20,8 @@ app.use(cors({
   exposedHeaders: ['Authorization']
 }));
 
+app.options("*", cors());
+
 // Regular middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
