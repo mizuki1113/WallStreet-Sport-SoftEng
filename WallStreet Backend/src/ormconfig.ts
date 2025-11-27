@@ -13,7 +13,7 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'wallstreet_db',
   entities: [User, TimeSlot, Booking, Transaction],
-  synchronize: process.env.NODE_ENV !== 'production', 
+  synchronize: true, 
   logging: process.env.NODE_ENV === 'development',
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
