@@ -4,17 +4,23 @@ import { Booking } from '../entities/Booking';
 export class EmailService {
   private transporter;
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-  }
+constructor() {
+  this.transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 465,  // Use SSL port
+    secure: true, // Required for port 465
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    logger: true,   // <---- ENABLE LOGGING
+    debug: true,    // <---- SHOW FULL SMTP CONVERSATION
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+}
+
 
   async sendBookingConfirmation(booking: Booking, transactionId?: string) {
     const emailHtml = this.generateConfirmationEmail(booking);
