@@ -161,7 +161,7 @@ export function QRCodePaymentModal({
             <div className="flex justify-center">
               <div className="bg-white p-2 rounded-lg flex items-center justify-center">
                 <img
-                  src="/src/assets/gcash-qr.png"
+                  src="/gcash-qr.png"
                   alt="GCash QR Code"
                   className="object-contain"
                   style={{ width: 250, height: 250 }}
