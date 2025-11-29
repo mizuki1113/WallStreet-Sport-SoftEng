@@ -9,17 +9,26 @@ import { AboutSection } from './components/AboutSection';
 import { Footer } from './components/Footer';
 import { AdminLogin } from './components/AdminLogin';
 import { AdminDashboard } from './components/AdminDashboard';
+import { Loader } from './components/Loader';
 
 export default function App() {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [appLoading, setAppLoading] = useState(true); // 👈 new
 
-  // Check if admin is already logged in on app load
   useEffect(() => {
+    // Check if admin is already logged in on app load
     const adminSession = localStorage.getItem('isAdminLoggedIn');
     if (adminSession === 'true') {
       setIsAdminLoggedIn(true);
     }
+
+    // Simulate initial loading screen (you can adjust/remove timeout)
+    const timer = setTimeout(() => {
+      setAppLoading(false);
+    }, 800); // 0.8s
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleAdminLoginClick = () => {
@@ -28,11 +37,18 @@ export default function App() {
 
   const handleAdminLogin = () => {
     setIsAdminLoggedIn(true);
+    localStorage.setItem('isAdminLoggedIn', 'true'); // optional: persist login
   };
 
   const handleAdminLogout = () => {
     setIsAdminLoggedIn(false);
+    localStorage.removeItem('isAdminLoggedIn'); // optional: clear login
   };
+
+  // 🔄 Show loader while app is "booting"
+  if (appLoading) {
+    return <Loader />;
+  }
 
   // If admin is logged in, show the admin dashboard
   if (isAdminLoggedIn) {
