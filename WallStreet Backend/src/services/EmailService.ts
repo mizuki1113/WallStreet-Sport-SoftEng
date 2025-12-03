@@ -1,48 +1,38 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { Booking } from '../entities/Booking';
 
 export class EmailService {
-  private transporter;
+  private resend;
 
-constructor() {
-  this.transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 465,  // Use SSL port
-    secure: true, // Required for port 465
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    logger: true,   // <---- ENABLE LOGGING
-    debug: true,    // <---- SHOW FULL SMTP CONVERSATION
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-}
-
+  constructor() {
+    this.resend = new Resend(process.env.RESEND_API_KEY);
+  }
 
   async sendBookingConfirmation(booking: Booking, transactionId?: string) {
     const emailHtml = this.generateConfirmationEmail(booking);
 
     try {
-      const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'WallStreet Sport <noreply@wallstreetsport.com>',
+      const { data, error } = await this.resend.emails.send({
+        from: "WallStreet Sport <onboarding@resend.dev>",  // Works without domain
         to: booking.email,
-        subject: 'Booking Confirmation - WallStreet Sport',
+        subject: "Booking Confirmation - WallStreet Sport",
         html: emailHtml,
       });
 
-      console.log('✅ Email sent:', info.messageId);
-      return { success: true, messageId: info.messageId };
-    } catch (error: any) {
-      console.error('❌ Email sending failed:', error.message);
-      throw new Error('Failed to send confirmation email');
+      if (error) {
+        console.error("❌ Email sending failed:", error);
+        throw new Error("Failed to send confirmation email");
+      }
+
+      console.log("✅ Email sent:", data?.id || "No ID returned");
+      return { success: true, messageId: data?.id };
+    } catch (err: any) {
+      console.error("❌ Email sending error:", err.message || err);
+      throw new Error("Failed to send confirmation email");
     }
   }
 
   private generateConfirmationEmail(booking: Booking): string {
-    // bookingDate is now a string '2025-11-22'
     const bookingDateStr = String(booking.bookingDate);
     const [year, month, day] = bookingDateStr.split('-').map(Number);
     const dateForFormatting = new Date(year, month - 1, day);
@@ -209,11 +199,7 @@ constructor() {
   }
 
   async testConnection() {
-    try {
-      await this.transporter.verify();
-      return true;
-    } catch (error: any) {
-      return false;
-    }
+    // Resend does not need SMTP verification
+    return true;
   }
 }
