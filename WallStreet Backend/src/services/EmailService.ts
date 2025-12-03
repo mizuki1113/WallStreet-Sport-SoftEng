@@ -135,7 +135,12 @@ export class EmailService {
 <body>
   <div class="email-container">
     <div class="logo">
-      <img src="https://i.imgur.com/nAbwdb0.png" alt="WallStreet Sport Logo">
+      <img 
+  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABdwAAAH0CAIAAACo53h7AACAAElEQVR4nGz9Z3s...sqjoC+lBdLO2hDSFaaP9h53p3R6cJ6uKF18pEeJxyf3q2l/4FICHpMxWvYFnqkx" 
+  alt="WallStreet Sport Logo"
+  style="max-width:600px;height:auto;"
+/>
+
     </div>
     
     <div class="content">
