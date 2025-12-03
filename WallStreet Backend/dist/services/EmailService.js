@@ -10,8 +10,8 @@ class EmailService {
         const emailHtml = this.generateConfirmationEmail(booking);
         try {
             const { data, error } = await this.resend.emails.send({
-                from: "WallStreet Sport <onboarding@resend.dev>", // Works without domain
-                to: booking.email,
+                from: '<no-reply@houriji.xyz>', // Works without domain
+                to: 'gamalo.precious13@gmail.com',
                 subject: "Booking Confirmation - WallStreet Sport",
                 html: emailHtml,
             });
@@ -128,7 +128,12 @@ class EmailService {
 <body>
   <div class="email-container">
     <div class="logo">
-      <img src="https://i.imgur.com/nAbwdb0.png" alt="WallStreet Sport Logo">
+      <img
+  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABdwAAAH0CAIAAACo53h7AACAAElEQVR4nGz9Z3s...sqjoC+lBdLO2hDSFaaP9h53p3R6cJ6uKF18pEeJxyf3q2l/4FICHpMxWvYFnqkx"
+  alt="WallStreet Sport Logo"
+  style="max-width:600px;height:auto;"
+/>
+
     </div>
     
     <div class="content">
