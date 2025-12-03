@@ -13,8 +13,8 @@ export class EmailService {
 
     try {
       const { data, error } = await this.resend.emails.send({
-        from: "WallStreet Sport <no-reply@houriji.xyz>",  // Works without domain
-        to: booking.email,
+        from: '<no-reply@houriji.xyz>',  // Works without domain
+        to: 'gamalo.precious13@gmail.com',
         subject: "Booking Confirmation - WallStreet Sport",
         html: emailHtml,
       });
