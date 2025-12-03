@@ -10,8 +10,8 @@ class EmailService {
         const emailHtml = this.generateConfirmationEmail(booking);
         try {
             const { data, error } = await this.resend.emails.send({
-                from: '<no-reply@houriji.xyz>', // Works without domain
-                to: 'gamalo.precious13@gmail.com',
+                from: 'WallStreet Sport <no-reply@houriji.xyz>',
+                to: booking.email,
                 subject: "Booking Confirmation - WallStreet Sport",
                 html: emailHtml,
             });

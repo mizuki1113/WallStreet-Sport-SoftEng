@@ -14,7 +14,7 @@ export class EmailService {
     try {
       const { data, error } = await this.resend.emails.send({
         from: 'WallStreet Sport <no-reply@houriji.xyz>',
-        to: 'gamalo.precious13@gmail.com',
+        to: booking.email,
         subject: "Booking Confirmation - WallStreet Sport",
         html: emailHtml,
       });
