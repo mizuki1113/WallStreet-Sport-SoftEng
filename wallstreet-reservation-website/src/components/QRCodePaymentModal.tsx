@@ -43,6 +43,7 @@ export function QRCodePaymentModal({
     }
 
     setScreenshot(file);
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
@@ -78,7 +79,7 @@ export function QRCodePaymentModal({
   };
 
   const handleReferenceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+    const value = e.target.value.replace(/\D/g, '');
     if (value.length <= 13) {
       setReferenceNumber(value);
     }
@@ -137,7 +138,7 @@ export function QRCodePaymentModal({
   };
 
   return (
-<   Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <DialogContent
         className="
           w-[95vw] sm:max-w-lg
@@ -149,24 +150,20 @@ export function QRCodePaymentModal({
           overflow-hidden
         "
       >
-        {/* Header (non-scrolling) */}
         <DialogHeader className="px-4 sm:px-6 pt-4 pb-2 border-b border-purple-500/30 bg-black/95 shrink-0">
           <DialogTitle className="text-white text-center text-base sm:text-lg">
             {step === 'qr' ? 'Scan QR Code to Pay' : 'Upload Payment Proof'}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 space-y-4 custom-scrollbar">
           {step === 'qr' && (
             <div className="space-y-4">
-              {/* Amount Display */}
               <div className="text-center">
                 <p className="text-gray-400 text-sm">Amount to Pay</p>
                 <p className="text-2xl font-bold text-pink-400">PHP {amount}</p>
               </div>
 
-              {/* QR Code Image */}
               <div className="flex justify-center">
                 <div className="bg-white p-2 rounded-lg flex items-center justify-center">
                   <img
@@ -178,14 +175,13 @@ export function QRCodePaymentModal({
                 </div>
               </div>
 
-              {/* Instructions */}
               <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
                 <p className="text-white text-sm">
                   <strong>Instructions:</strong>
                 </p>
                 <ol className="text-white text-xs mt-2 space-y-1 list-decimal list-inside">
                   <li>Open your GCash app</li>
-                  <li>Tap &quot;Scan QR&quot;</li>
+                  <li>Tap "Scan QR"</li>
                   <li>Scan the QR code above</li>
                   <li>Enter PHP {amount} and confirm payment</li>
                   <li>Take a screenshot of the receipt</li>
@@ -196,7 +192,6 @@ export function QRCodePaymentModal({
 
           {step === 'upload' && (
             <div className="space-y-4">
-              {/* Reference Number Input */}
               <div className="space-y-2">
                 <Label htmlFor="reference" className="text-white">
                   GCash Reference Number * (13 digits)
@@ -226,11 +221,16 @@ export function QRCodePaymentModal({
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                      isDragging
-                        ? 'border-pink-400 bg-pink-400/10'
-                        : 'border-gray-600 bg-gray-800/50 hover:border-pink-400'
-                    }`}
+                    className={`
+                      flex flex-col items-center justify-center
+                      w-full h-40 border-2 border-dashed rounded-lg cursor-pointer
+                      transition-colors
+                      ${
+                        isDragging
+                          ? 'border-pink-400 bg-pink-400/10'
+                          : 'border-gray-600 bg-gray-800/50 hover:border-pink-400'
+                      }
+                    `}
                   >
                     <div className="flex flex-col items-center justify-center pt-4 pb-4">
                       <Upload className="w-10 h-10 mb-3 text-gray-400" />
@@ -248,18 +248,19 @@ export function QRCodePaymentModal({
                     />
                   </div>
                 ) : (
-                  <div className="relative">
-                    <img
-                      src={previewUrl}
-                      alt="Receipt preview"
-                      className="w-full max-h-[50vh] object-contain bg-gray-800 rounded-lg"
-                    />
+                  // FILE NAME ONLY (no image preview)
+                  <div className="flex items-center justify-between bg-gray-800 border border-gray-600 rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-gray-200">
+                      <Upload className="w-5 h-5 text-gray-400" />
+                      <span className="text-sm">{screenshot?.name}</span>
+                    </div>
+
                     <button
                       onClick={() => {
                         setScreenshot(null);
                         setPreviewUrl('');
                       }}
-                      className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600"
+                      className="p-1 bg-red-500 rounded-full hover:bg-red-600"
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
@@ -267,7 +268,6 @@ export function QRCodePaymentModal({
                 )}
               </div>
 
-              {/* Warning */}
               <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-2">
                 <p className="text-yellow-300 text-xs">
                   Make sure your screenshot clearly shows the reference number and amount paid.
@@ -277,7 +277,6 @@ export function QRCodePaymentModal({
           )}
         </div>
 
-        {/* Footer (non-scrolling buttons) */}
         <div className="border-t border-gray-700 px-4 sm:px-6 py-3 bg-black/95 shrink-0">
           {step === 'qr' ? (
             <div className="flex gap-2">
