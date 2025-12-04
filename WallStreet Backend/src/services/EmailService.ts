@@ -135,8 +135,8 @@ export class EmailService {
 <body>
   <div class="email-container">
     <div class="logo">
-      <img
-  src='wallstreet logo.png'
+     <img
+  src="https://res.cloudinary.com/dn7umol6y/image/upload/v1764857252/wallstreet_logo_mkcwes.png"
   alt="WallStreet Sport Logo"
   style="max-width:600px;height:auto;"
 />
