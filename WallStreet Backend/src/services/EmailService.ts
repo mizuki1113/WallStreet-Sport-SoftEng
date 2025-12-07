@@ -99,18 +99,13 @@ export class EmailService {
       overflow: hidden;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 30px;
-      text-align: center;
-      color: white;
-    }
     .logo {
       text-align: left;
-      margin-bottom: 20px;
     }
     .logo img {
+      display: block;
       max-width: 600px;
+      width: 100%;
       height: auto;
     }
     p {
