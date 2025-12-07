@@ -15,25 +15,36 @@ export class EmailService {
       const { data, error } = await this.resend.emails.send({
         from: 'WallStreet Sport <no-reply@houriji.xyz>',
         to: booking.email,
-        subject: "Booking Confirmation - WallStreet Sport",
+        subject: 'Booking Confirmation - WallStreet Sport',
         html: emailHtml,
       });
 
       if (error) {
-        console.error("❌ Email sending failed:", error);
-        throw new Error("Failed to send confirmation email");
+        console.error('❌ Email sending failed:', error);
+        throw new Error('Failed to send confirmation email');
       }
 
-      console.log("✅ Email sent:", data?.id || "No ID returned");
+      console.log('✅ Email sent:', data?.id || 'No ID returned');
       return { success: true, messageId: data?.id };
     } catch (err: any) {
-      console.error("❌ Email sending error:", err.message || err);
-      throw new Error("Failed to send confirmation email");
+      console.error('❌ Email sending error:', err.message || err);
+      throw new Error('Failed to send confirmation email');
     }
   }
 
   private generateConfirmationEmail(booking: Booking): string {
-    const bookingDateStr = String(booking.bookingDate);
+    // ---- safer date handling ----
+    const rawDate: any = booking.bookingDate;
+    let bookingDateStr: string;
+
+    if (rawDate instanceof Date) {
+      bookingDateStr = rawDate.toISOString().split('T')[0];
+    } else if (typeof rawDate === 'string') {
+      bookingDateStr = rawDate.split('T')[0];
+    } else {
+      bookingDateStr = String(rawDate).split('T')[0];
+    }
+
     const [year, month, day] = bookingDateStr.split('-').map(Number);
     const dateForFormatting = new Date(year, month - 1, day);
 
@@ -41,8 +52,18 @@ export class EmailService {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
+
+    // ---- NEW: derive time text & amount for multi-slots ----
+    const timeText =
+      booking.slotDetails && booking.slotDetails.length > 0
+        ? booking.slotDetails.map(s => s.displayTime).join(', ')
+        : Array.isArray((booking as any).timeSlots)
+          ? (booking as any).timeSlots.join(', ')
+          : 'N/A';
+
+    const amount = Number((booking as any).totalRate ?? 0).toFixed(2);
 
     return `
 <!DOCTYPE html>
@@ -135,17 +156,16 @@ export class EmailService {
   <tr>
     <td align="center">
       <img
-  src="https://houriji.xyz/wallstreet-logo.png"
-  alt="WallStreet Sport Logo"
-  style="max-width: 600px; height: auto;"
-/>
+        src="https://houriji.xyz/wallstreet-logo.png"
+        alt="WallStreet Sport Logo"
+        style="max-width: 600px; height: auto;"
+      />
     </td>
   </tr>
 </table>
-
-
-    </div>
-    
+</head>
+<body>
+  <div class="email-container">
     <div class="content">
       <h2 style="color: #667eea;">Good day, ${booking.customerName}!</h2>
       
@@ -166,7 +186,7 @@ export class EmailService {
         
         <div class="detail-row">
           <span class="detail-label">Time:</span>
-          <span class="detail-value">${booking.displayTime}</span>
+          <span class="detail-value">${timeText}</span>
         </div>
         
         <div class="detail-row">
@@ -176,7 +196,7 @@ export class EmailService {
         
         <div class="detail-row">
           <span class="detail-label">Amount:</span>
-          <span class="detail-value">PHP ${booking.rate}</span>
+          <span class="detail-value">PHP ${amount}</span>
         </div>
       </div>
       
