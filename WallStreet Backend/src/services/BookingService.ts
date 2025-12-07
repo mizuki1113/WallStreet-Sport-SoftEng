@@ -1,19 +1,18 @@
 import { AppDataSource } from '../ormconfig';
 import { Booking } from '../entities/Booking';
 import { TimeSlot } from '../entities/TimeSlot';
-import { Transaction } from '../entities/Transaction';
 
 interface CreateBookingDTO {
   name: string;
   email: string;
   contact: string;
-  date: string;  // ISO date string
-  timeSlot: {
+  date: string;  // 'YYYY-MM-DD'
+  timeSlots: {
     time: string;
     displayTime: string;
     rate: number;
     period: 'morning' | 'afternoon' | 'evening';
-  };
+  }[];
 }
 
 export class BookingService {
@@ -27,82 +26,127 @@ export class BookingService {
 
   // Get available slots for a specific date
   async getAvailableSlots(date: string) {
-    
     const allSlots = await this.timeSlotRepo.find({ where: { isActive: true } });
-    
-    // Get booked slots for this date - now using string comparison
+
     const bookedSlots = await this.bookingRepo
       .createQueryBuilder('booking')
       .where('booking.bookingDate = :date', { date })
       .andWhere('booking.status = :status', { status: 'confirmed' })
       .getMany();
 
-  
+    const bookedTimeSlots = new Set<string>();
+    bookedSlots.forEach((b: any) => {
+      if (Array.isArray(b.timeSlots)) {
+        b.timeSlots.forEach((t: string) => bookedTimeSlots.add(t));
+      }
+    });
 
-    const bookedTimeSlots = new Set(bookedSlots.map(b => b.timeSlot));
-
-    // Map to frontend format
     return allSlots.map(slot => ({
       time: slot.timeRange,
       displayTime: slot.displayTime,
       rate: Number(slot.rate),
       available: !bookedTimeSlots.has(slot.timeRange),
-      period: slot.period
+      period: slot.period,
     }));
   }
 
-  // Create new booking (pending status)
+  // 🔴 THIS IS THE IMPORTANT PART
   async createBooking(data: CreateBookingDTO) {
-    
-    // Check if slot is already booked - string comparison
-    const existing = await this.bookingRepo
-      .createQueryBuilder('booking')
-      .where('booking.bookingDate = :date', { date: data.date })
-      .andWhere('booking.timeSlot = :timeSlot', { timeSlot: data.timeSlot.time })
-      .andWhere('booking.status = :status', { status: 'confirmed' })
-      .getOne();
-
-    if (existing) {
-      throw { status: 409, message: 'This time slot is already booked' };
+    // basic validation
+    if (!data.timeSlots || !Array.isArray(data.timeSlots) || data.timeSlots.length === 0) {
+      throw { status: 400, message: 'Please select at least one time slot' };
     }
 
-    // Create booking - store date as string '2024-11-22'
+    // clean & validate slots to avoid reading `.time` from undefined
+    const cleanSlots = data.timeSlots.filter(
+      (s): s is CreateBookingDTO['timeSlots'][number] =>
+        !!s && typeof s.time === 'string' && s.time.trim().length > 0
+    );
+
+    if (cleanSlots.length === 0) {
+      throw { status: 400, message: 'Invalid time slots received' };
+    }
+
+    const requestedTimes = cleanSlots.map(s => s.time);
+
+    // find all confirmed bookings on that date
+    const existingBookings = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .where('booking.bookingDate = :date', { date: data.date })
+      .andWhere('booking.status = :status', { status: 'confirmed' })
+      .getMany();
+
+    const alreadyBookedTimes = new Set<string>();
+    existingBookings.forEach((b: any) => {
+      if (Array.isArray(b.timeSlots)) {
+        b.timeSlots.forEach((t: string) => alreadyBookedTimes.add(t));
+      }
+    });
+
+    const conflicting = requestedTimes.filter(t => alreadyBookedTimes.has(t));
+    if (conflicting.length > 0) {
+      throw {
+        status: 409,
+        message: `These time slots are already booked: ${conflicting.join(', ')}`,
+      };
+    }
+
+    const totalRate = cleanSlots.reduce(
+      (sum, s) => sum + Number(s.rate),
+      0
+    );
+
     const booking = this.bookingRepo.create({
       bookingReference: this.generateBookingReference(),
       customerName: data.name,
       email: data.email,
       phone: data.contact,
-      bookingDate: data.date,  // Store as string directly
-      timeSlot: data.timeSlot.time,
-      displayTime: data.timeSlot.displayTime,
-      rate: data.timeSlot.rate,
-      period: data.timeSlot.period,
-      status: 'pending'
+      bookingDate: data.date as any, // 'YYYY-MM-DD'
+      timeSlots: requestedTimes,
+      slotDetails: cleanSlots,
+      totalRate,
+      status: 'pending',
+      emailSent: false,
     });
 
-    const savedBooking = await this.bookingRepo.save(booking);
-    
-    return savedBooking;
+    return await this.bookingRepo.save(booking);
   }
 
   // Confirm booking after successful payment
   async confirmBooking(bookingId: string) {
-    const booking = await this.bookingRepo.findOne({ where: { id: bookingId } });
+    const booking: any = await this.bookingRepo.findOne({ where: { id: bookingId } });
+
     if (!booking) {
       throw { status: 404, message: 'Booking not found' };
     }
 
-    // Double-check no conflicts (race condition protection)
-    const conflict = await this.bookingRepo.findOne({
-      where: {
-        bookingDate: booking.bookingDate,
-        timeSlot: booking.timeSlot,
-        status: 'confirmed'
+    const timeSlots: string[] = booking.timeSlots || [];
+
+    if (!Array.isArray(timeSlots) || timeSlots.length === 0) {
+      booking.status = 'confirmed';
+      return await this.bookingRepo.save(booking);
+    }
+
+    const otherBookings: any[] = await this.bookingRepo
+      .createQueryBuilder('b')
+      .where('b.bookingDate = :date', { date: booking.bookingDate })
+      .andWhere('b.status = :status', { status: 'confirmed' })
+      .andWhere('b.id != :id', { id: bookingId })
+      .getMany();
+
+    const bookedTimes = new Set<string>();
+    otherBookings.forEach(b => {
+      if (Array.isArray(b.timeSlots)) {
+        b.timeSlots.forEach((t: string) => bookedTimes.add(t));
       }
     });
 
-    if (conflict && conflict.id !== bookingId) {
-      throw { status: 409, message: 'Slot was just booked by someone else' };
+    const hasConflict = timeSlots.some(t => bookedTimes.has(t));
+    if (hasConflict) {
+      throw {
+        status: 409,
+        message: 'One or more selected slots were just booked by someone else',
+      };
     }
 
     booking.status = 'confirmed';
@@ -113,7 +157,7 @@ export class BookingService {
   async getAllBookings() {
     return await this.bookingRepo.find({
       order: { createdAt: 'DESC' },
-      relations: ['transactions']
+      relations: ['transactions'],
     });
   }
 
@@ -121,13 +165,13 @@ export class BookingService {
   async getBookingById(id: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id },
-      relations: ['transactions']
+      relations: ['transactions'],
     });
-    
+
     if (!booking) {
       throw { status: 404, message: 'Booking not found' };
     }
-    
+
     return booking;
   }
 
@@ -149,24 +193,25 @@ export class BookingService {
 
   // Get booking stats (admin dashboard)
   async getBookingStats() {
-    const allBookings = await this.bookingRepo.find();
-    const today = new Date().toISOString().split('T')[0]; // '2024-11-22'
-    
-    // Now bookingDate is a string, so direct comparison works
-    const todayBookings = allBookings.filter(b => {
-      const bookingDateStr = String(b.bookingDate); // Cast to string to satisfy TypeScript
-      return bookingDateStr === today;
-    });
-    
+    const allBookings: any[] = await this.bookingRepo.find();
+    const today = new Date().toISOString().split('T')[0];
+
+    const todayBookings = allBookings.filter(
+      b => String(b.bookingDate).split('T')[0] === today
+    );
     const confirmedBookings = allBookings.filter(b => b.status === 'confirmed');
-    const totalRevenue = confirmedBookings.reduce((sum, b) => sum + Number(b.rate), 0);
+
+    const totalRevenue = confirmedBookings.reduce(
+      (sum, b) => sum + Number(b.totalRate ?? 0),
+      0
+    );
     const pendingCount = allBookings.filter(b => b.status === 'pending').length;
 
     return {
       totalBookings: allBookings.length,
       todayBookings: todayBookings.length,
       totalRevenue,
-      pendingBookings: pendingCount
+      pendingBookings: pendingCount,
     };
   }
 }
