@@ -135,7 +135,7 @@ export class EmailService {
   <tr>
     <td align="center">
       <img
-  src="https://houriji.xyz/wallstreet_logo.png"
+  src="https://houriji.xyz/wallstreet-logo.png"
   alt="WallStreet Sport Logo"
   style="max-width: 600px; height: auto;"
 />
