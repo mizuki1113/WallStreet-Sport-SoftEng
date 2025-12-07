@@ -85,18 +85,13 @@ class EmailService {
       overflow: hidden;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 30px;
-      text-align: center;
-      color: white;
-    }
     .logo {
       text-align: left;
-      margin-bottom: 20px;
     }
     .logo img {
+      display: block;
       max-width: 600px;
+      width: 100%;
       height: auto;
     }
     p {
@@ -152,22 +147,14 @@ class EmailService {
   </style>
 </head>
 <body>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
-    <tr>
-      <td align="center">
-        <img
-          src="https://houriji.xyz/wallstreet-logo.png"
-          alt="WallStreet Sport Logo"
-          style="max-width: 600px; height: auto;"
-        />
-      </td>
-    </tr>
-  </table>
-
   <div class="email-container">
+    <div class="logo">
+      <img src="https://houriji.xyz/wallstreet-logo.png" alt="WallStreet Sport Logo">
+    </div>
+    
     <div class="content">
       <h2 style="color: #667eea;">Good day, ${b.customerName}!</h2>
-      
+         
       <p>Thank you for booking with <strong>WallStreet Sport</strong>! This email is sent for your booking confirmation.</p>
       
       <div class="booking-details">
