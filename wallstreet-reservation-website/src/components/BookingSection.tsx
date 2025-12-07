@@ -42,11 +42,11 @@ export function BookingSection() {
   // convert selected date to YYYY-MM-DD for API
   const dateStr = selectedDate
     ? (() => {
-        const year = selectedDate.getFullYear();
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-        const day = String(selectedDate.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      })()
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })()
     : undefined;
 
   const {
@@ -216,9 +216,9 @@ export function BookingSection() {
           {currentStep !== 'qr' && currentStep !== 'pending' && (
             <>
               {currentStep === 'calendar' && (
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr,2fr] gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Calendar */}
-                  <Card className="bg-black/50 backdrop-blur-md border-purple-500/30">
+                  <Card className="bg-black/50 backdrop-blur-md border-purple-500/30 lg:col-span-1">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-white flex items-center gap-2">
                         <CalendarIcon className="w-5 h-5 text-pink-400" />
@@ -239,7 +239,7 @@ export function BookingSection() {
                   </Card>
 
                   {/* Time Slots */}
-                  <Card className="bg-black/50 backdrop-blur-md border-purple-500/30">
+                  <Card className="bg-black/50 backdrop-blur-md border-purple-500/30 lg:col-span-2">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-white flex items-center gap-2">
                         <Clock className="w-5 h-5 text-pink-400" />
@@ -247,19 +247,16 @@ export function BookingSection() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
+                      {/* your existing slots content unchanged */}
                       {!selectedDate ? (
                         <div className="text-center py-12">
                           <CalendarIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                          <p className="text-gray-400">
-                            Please select a date first
-                          </p>
+                          <p className="text-gray-400">Please select a date first</p>
                         </div>
                       ) : loadingSlots ? (
                         <div className="text-center py-12">
                           <Loader2 className="w-12 h-12 text-pink-400 mx-auto mb-4 animate-spin" />
-                          <p className="text-gray-400">
-                            Loading available slots...
-                          </p>
+                          <p className="text-gray-400">Loading available slots...</p>
                         </div>
                       ) : slotsError ? (
                         <div className="text-center py-12">
@@ -278,13 +275,12 @@ export function BookingSection() {
                                 key={slot.time}
                                 onClick={() => handleTimeSlotSelect(slot)}
                                 disabled={!slot.available}
-                                className={`w-full p-3 rounded-lg border-2 transition-all duration-200 ${
-                                  slot.available
+                                className={`w-full p-3 rounded-lg border-2 transition-all duration-200 ${slot.available
                                     ? isSelected
                                       ? 'border-pink-500 bg-pink-500/20 text-white'
                                       : 'border-gray-600 bg-gray-800/50 text-white hover:border-pink-400 hover:bg-pink-400/10'
                                     : 'border-gray-700 bg-gray-900/50 text-gray-500 cursor-not-allowed'
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="text-left">

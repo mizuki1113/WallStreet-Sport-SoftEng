@@ -57,12 +57,12 @@ class EmailService {
             : Array.isArray(b.timeSlots)
                 ? b.timeSlots.join(', ')
                 : b.displayTime ?? 'N/A';
-        const amountNumber = typeof b.totalRate === 'number' && !Number.isNaN(b.totalRate)
-            ? b.totalRate
-            : typeof b.rate === 'number'
-                ? b.rate
+        const amountNumber = !isNaN(Number(b.totalRate)) && Number(b.totalRate) > 0
+            ? Number(b.totalRate)
+            : !isNaN(Number(b.rate))
+                ? Number(b.rate)
                 : 0;
-        const amount = Number(amountNumber).toFixed(2);
+        const amount = amountNumber.toFixed(2);
         return `
 <!DOCTYPE html>
 <html>
