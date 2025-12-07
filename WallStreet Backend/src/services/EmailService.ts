@@ -166,17 +166,24 @@ export class EmailService {
   </style>
 </head>
 <body>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
-    <tr>
-      <td align="center">
-        <img
-          src="https://houriji.xyz/wallstreet-logo.png"
-          alt="WallStreet Sport Logo"
-          style="max-width: 600px; height: auto;"
-        />
-      </td>
-    </tr>
-  </table>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
+  <tr>
+    <td align="center" style="padding: 10px 0;">
+      <img
+        src="https://houriji.xyz/wallstreet-logo.png"
+        alt="WallStreet Sport Logo"
+        style="
+          max-width: 600px;
+          width: 100%;
+          height: auto;
+          display: block;
+          margin: 0 auto 20px auto;
+        "
+      />
+    </td>
+  </tr>
+</table>
+
 
   <div class="email-container">
     <div class="content">
