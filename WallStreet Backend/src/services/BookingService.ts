@@ -50,68 +50,67 @@ export class BookingService {
     }));
   }
 
-  // 🔴 THIS IS THE IMPORTANT PART
-async createBooking(data: CreateBookingDTO) {
-  // basic validation
-  if (!data.timeSlots || !Array.isArray(data.timeSlots) || data.timeSlots.length === 0) {
-    throw { status: 400, message: 'Please select at least one time slot' };
-  }
-
-  // clean & validate slots so we never read `.time` from undefined
-  const cleanSlots = data.timeSlots.filter(
-    (s): s is CreateBookingDTO['timeSlots'][number] =>
-      !!s && typeof s.time === 'string' && s.time.trim().length > 0
-  );
-
-  if (cleanSlots.length === 0) {
-    throw { status: 400, message: 'Invalid time slots received' };
-  }
-
-  const requestedTimes = cleanSlots.map(s => s.time);
-
-  // find all confirmed bookings on that date
-  const existingBookings = await this.bookingRepo
-    .createQueryBuilder('booking')
-    .where('booking.bookingDate = :date', { date: data.date })
-    .andWhere('booking.status = :status', { status: 'confirmed' })
-    .getMany();
-
-  const alreadyBookedTimes = new Set<string>();
-  existingBookings.forEach((b: any) => {
-    if (Array.isArray(b.timeSlots)) {
-      b.timeSlots.forEach((t: string) => alreadyBookedTimes.add(t));
+  // 🔴 createBooking for MULTIPLE time slots
+  async createBooking(data: CreateBookingDTO) {
+    // validate array exists
+    if (!data.timeSlots || !Array.isArray(data.timeSlots) || data.timeSlots.length === 0) {
+      throw { status: 400, message: 'Please select at least one time slot' };
     }
-  });
 
-  const conflicting = requestedTimes.filter(t => alreadyBookedTimes.has(t));
-  if (conflicting.length > 0) {
-    throw {
-      status: 409,
-      message: `These time slots are already booked: ${conflicting.join(', ')}`,
-    };
+    // clean & validate each slot so we never read .time of undefined
+    const cleanSlots = data.timeSlots.filter(
+      (s): s is CreateBookingDTO['timeSlots'][number] =>
+        !!s && typeof s.time === 'string' && s.time.trim().length > 0
+    );
+
+    if (cleanSlots.length === 0) {
+      throw { status: 400, message: 'Invalid time slots received' };
+    }
+
+    const requestedTimes = cleanSlots.map(s => s.time);
+
+    // find confirmed bookings on that date
+    const existingBookings = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .where('booking.bookingDate = :date', { date: data.date })
+      .andWhere('booking.status = :status', { status: 'confirmed' })
+      .getMany();
+
+    const alreadyBookedTimes = new Set<string>();
+    existingBookings.forEach((b: any) => {
+      if (Array.isArray(b.timeSlots)) {
+        b.timeSlots.forEach((t: string) => alreadyBookedTimes.add(t));
+      }
+    });
+
+    const conflicting = requestedTimes.filter(t => alreadyBookedTimes.has(t));
+    if (conflicting.length > 0) {
+      throw {
+        status: 409,
+        message: `These time slots are already booked: ${conflicting.join(', ')}`,
+      };
+    }
+
+    const totalRate = cleanSlots.reduce(
+      (sum, s) => sum + Number(s.rate),
+      0
+    );
+
+    const booking = this.bookingRepo.create({
+      bookingReference: this.generateBookingReference(),
+      customerName: data.name,
+      email: data.email,
+      phone: data.contact,
+      bookingDate: data.date as any, // 'YYYY-MM-DD'
+      timeSlots: requestedTimes,
+      slotDetails: cleanSlots,
+      totalRate,
+      status: 'pending',
+      emailSent: false,
+    });
+
+    return await this.bookingRepo.save(booking);
   }
-
-  const totalRate = cleanSlots.reduce(
-    (sum, s) => sum + Number(s.rate),
-    0
-  );
-
-  const booking = this.bookingRepo.create({
-    bookingReference: this.generateBookingReference(),
-    customerName: data.name,
-    email: data.email,
-    phone: data.contact,
-    bookingDate: data.date as any, // 'YYYY-MM-DD'
-    timeSlots: requestedTimes,
-    slotDetails: cleanSlots,
-    totalRate,
-    status: 'pending',
-    emailSent: false,
-  });
-
-  return await this.bookingRepo.save(booking);
-}
-
 
   // Confirm booking after successful payment
   async confirmBooking(bookingId: string) {
