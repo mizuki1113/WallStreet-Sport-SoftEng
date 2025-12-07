@@ -134,12 +134,11 @@ export class EmailService {
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
   <tr>
     <td align="center">
-      <img 
-        src="https://res.cloudinary.com/dn7umol6y/image/upload/v1764857252/wallstreet_logo_mkcwes.png"
-        alt="WallStreet Sport Logo"
-        width="600"
-        style="display:block;width:100%;max-width:600px;height:auto;margin:0 auto;"
-      />
+      <img
+  src="https://houriji.xyz/wallstreet_logo.png"
+  alt="WallStreet Sport Logo"
+  style="max-width: 600px; height: auto;"
+/>
     </td>
   </tr>
 </table>
