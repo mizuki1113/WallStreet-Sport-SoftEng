@@ -33,8 +33,11 @@ export class EmailService {
   }
 
   private generateConfirmationEmail(booking: Booking): string {
+    // Work with a loose-typed copy so TS doesn’t complain about new props
+    const b: any = booking;
+
     // ---- safer date handling ----
-    const rawDate: any = booking.bookingDate;
+    const rawDate: any = b.bookingDate;
     let bookingDateStr: string;
 
     if (rawDate instanceof Date) {
@@ -55,15 +58,24 @@ export class EmailService {
       day: 'numeric',
     });
 
-    // ---- NEW: derive time text & amount for multi-slots ----
-    const timeText =
-      booking.slotDetails && booking.slotDetails.length > 0
-        ? booking.slotDetails.map(s => s.displayTime).join(', ')
-        : Array.isArray((booking as any).timeSlots)
-          ? (booking as any).timeSlots.join(', ')
-          : 'N/A';
+    // ---- derive time text & amount for multi-slots ----
+    const hasSlotDetails =
+      Array.isArray(b.slotDetails) && b.slotDetails.length > 0;
 
-    const amount = Number((booking as any).totalRate ?? 0).toFixed(2);
+    const timeText = hasSlotDetails
+      ? b.slotDetails.map((s: any) => s.displayTime).join(', ')
+      : Array.isArray(b.timeSlots)
+        ? b.timeSlots.join(', ')
+        : b.displayTime ?? 'N/A';
+
+    const amountNumber =
+      typeof b.totalRate === 'number' && !Number.isNaN(b.totalRate)
+        ? b.totalRate
+        : typeof b.rate === 'number'
+          ? b.rate
+          : 0;
+
+    const amount = Number(amountNumber).toFixed(2);
 
     return `
 <!DOCTYPE html>
@@ -152,22 +164,23 @@ export class EmailService {
       margin-top: 10px;
     }
   </style>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
-  <tr>
-    <td align="center">
-      <img
-        src="https://houriji.xyz/wallstreet-logo.png"
-        alt="WallStreet Sport Logo"
-        style="max-width: 600px; height: auto;"
-      />
-    </td>
-  </tr>
-</table>
 </head>
 <body>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
+    <tr>
+      <td align="center">
+        <img
+          src="https://houriji.xyz/wallstreet-logo.png"
+          alt="WallStreet Sport Logo"
+          style="max-width: 600px; height: auto;"
+        />
+      </td>
+    </tr>
+  </table>
+
   <div class="email-container">
     <div class="content">
-      <h2 style="color: #667eea;">Good day, ${booking.customerName}!</h2>
+      <h2 style="color: #667eea;">Good day, ${b.customerName}!</h2>
       
       <p>Thank you for booking with <strong>WallStreet Sport</strong>! This email is sent for your booking confirmation.</p>
       
@@ -176,7 +189,7 @@ export class EmailService {
         
         <div class="detail-row">
           <span class="detail-label">Booking Reference:</span>
-          <span class="detail-value">${booking.bookingReference}</span>
+          <span class="detail-value">${b.bookingReference}</span>
         </div>
         
         <div class="detail-row">

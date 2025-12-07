@@ -37,22 +37,39 @@ __decorate([
 ], Booking.prototype, "phone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'date', name: 'booking_date' }),
-    __metadata("design:type", Date)
+    __metadata("design:type", Object)
 ], Booking.prototype, "bookingDate", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'time_slot' }),
+    (0, typeorm_1.Column)('text', { name: 'time_slots', array: true, nullable: true }),
+    __metadata("design:type", Array)
+], Booking.prototype, "timeSlots", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'jsonb', name: 'slot_details', nullable: true }),
+    __metadata("design:type", Array)
+], Booking.prototype, "slotDetails", void 0);
+__decorate([
+    (0, typeorm_1.Column)('decimal', {
+        precision: 10,
+        scale: 2,
+        name: 'total_rate',
+        default: 0,
+    }),
+    __metadata("design:type", Number)
+], Booking.prototype, "totalRate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'time_slot', nullable: true }),
     __metadata("design:type", String)
 ], Booking.prototype, "timeSlot", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'display_time' }),
+    (0, typeorm_1.Column)({ name: 'display_time', nullable: true }),
     __metadata("design:type", String)
 ], Booking.prototype, "displayTime", void 0);
 __decorate([
-    (0, typeorm_1.Column)('decimal', { precision: 10, scale: 2 }),
+    (0, typeorm_1.Column)('decimal', { precision: 10, scale: 2, nullable: true }),
     __metadata("design:type", Number)
 ], Booking.prototype, "rate", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Booking.prototype, "period", void 0);
 __decorate([
@@ -75,6 +92,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Booking.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'email_sent', default: false }),
+    __metadata("design:type", Boolean)
+], Booking.prototype, "emailSent", void 0);
 exports.Booking = Booking = __decorate([
     (0, typeorm_1.Entity)('bookings')
 ], Booking);

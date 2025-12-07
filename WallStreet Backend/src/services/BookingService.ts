@@ -6,7 +6,7 @@ interface CreateBookingDTO {
   name: string;
   email: string;
   contact: string;
-  date: string;  // 'YYYY-MM-DD'
+  date: string; // 'YYYY-MM-DD'
   timeSlots: {
     time: string;
     displayTime: string;
@@ -19,12 +19,10 @@ export class BookingService {
   private bookingRepo = AppDataSource.getRepository(Booking);
   private timeSlotRepo = AppDataSource.getRepository(TimeSlot);
 
-  // Generate unique booking reference
   private generateBookingReference(): string {
     return `WS-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   }
 
-  // Get available slots for a specific date
   async getAvailableSlots(date: string) {
     const allSlots = await this.timeSlotRepo.find({ where: { isActive: true } });
 
@@ -50,14 +48,12 @@ export class BookingService {
     }));
   }
 
-  // 🔴 createBooking for MULTIPLE time slots
+  // 🔴 MULTI-SLOT booking creation
   async createBooking(data: CreateBookingDTO) {
-    // validate array exists
     if (!data.timeSlots || !Array.isArray(data.timeSlots) || data.timeSlots.length === 0) {
       throw { status: 400, message: 'Please select at least one time slot' };
     }
 
-    // clean & validate each slot so we never read .time of undefined
     const cleanSlots = data.timeSlots.filter(
       (s): s is CreateBookingDTO['timeSlots'][number] =>
         !!s && typeof s.time === 'string' && s.time.trim().length > 0
@@ -69,7 +65,6 @@ export class BookingService {
 
     const requestedTimes = cleanSlots.map(s => s.time);
 
-    // find confirmed bookings on that date
     const existingBookings = await this.bookingRepo
       .createQueryBuilder('booking')
       .where('booking.bookingDate = :date', { date: data.date })
@@ -101,7 +96,7 @@ export class BookingService {
       customerName: data.name,
       email: data.email,
       phone: data.contact,
-      bookingDate: data.date as any, // 'YYYY-MM-DD'
+      bookingDate: data.date as any,
       timeSlots: requestedTimes,
       slotDetails: cleanSlots,
       totalRate,
@@ -112,7 +107,6 @@ export class BookingService {
     return await this.bookingRepo.save(booking);
   }
 
-  // Confirm booking after successful payment
   async confirmBooking(bookingId: string) {
     const booking: any = await this.bookingRepo.findOne({ where: { id: bookingId } });
 
@@ -153,7 +147,6 @@ export class BookingService {
     return await this.bookingRepo.save(booking);
   }
 
-  // Get all bookings (admin)
   async getAllBookings() {
     return await this.bookingRepo.find({
       order: { createdAt: 'DESC' },
@@ -161,7 +154,6 @@ export class BookingService {
     });
   }
 
-  // Get single booking
   async getBookingById(id: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id },
@@ -175,14 +167,12 @@ export class BookingService {
     return booking;
   }
 
-  // Update booking status (admin)
   async updateBookingStatus(id: string, status: 'confirmed' | 'cancelled') {
     const booking = await this.getBookingById(id);
     booking.status = status;
     return await this.bookingRepo.save(booking);
   }
 
-  // Delete booking (admin)
   async deleteBooking(id: string) {
     const result = await this.bookingRepo.delete(id);
     if (result.affected === 0) {
@@ -191,7 +181,6 @@ export class BookingService {
     return { success: true };
   }
 
-  // Get booking stats (admin dashboard)
   async getBookingStats() {
     const allBookings: any[] = await this.bookingRepo.find();
     const today = new Date().toISOString().split('T')[0];

@@ -12,31 +12,57 @@ class EmailService {
             const { data, error } = await this.resend.emails.send({
                 from: 'WallStreet Sport <no-reply@houriji.xyz>',
                 to: booking.email,
-                subject: "Booking Confirmation - WallStreet Sport",
+                subject: 'Booking Confirmation - WallStreet Sport',
                 html: emailHtml,
             });
             if (error) {
-                console.error("❌ Email sending failed:", error);
-                throw new Error("Failed to send confirmation email");
+                console.error('❌ Email sending failed:', error);
+                throw new Error('Failed to send confirmation email');
             }
-            console.log("✅ Email sent:", data?.id || "No ID returned");
+            console.log('✅ Email sent:', data?.id || 'No ID returned');
             return { success: true, messageId: data?.id };
         }
         catch (err) {
-            console.error("❌ Email sending error:", err.message || err);
-            throw new Error("Failed to send confirmation email");
+            console.error('❌ Email sending error:', err.message || err);
+            throw new Error('Failed to send confirmation email');
         }
     }
     generateConfirmationEmail(booking) {
-        const bookingDateStr = String(booking.bookingDate);
+        // Work with a loose-typed copy so TS doesn’t complain about new props
+        const b = booking;
+        // ---- safer date handling ----
+        const rawDate = b.bookingDate;
+        let bookingDateStr;
+        if (rawDate instanceof Date) {
+            bookingDateStr = rawDate.toISOString().split('T')[0];
+        }
+        else if (typeof rawDate === 'string') {
+            bookingDateStr = rawDate.split('T')[0];
+        }
+        else {
+            bookingDateStr = String(rawDate).split('T')[0];
+        }
         const [year, month, day] = bookingDateStr.split('-').map(Number);
         const dateForFormatting = new Date(year, month - 1, day);
         const formattedDate = dateForFormatting.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
         });
+        // ---- derive time text & amount for multi-slots ----
+        const hasSlotDetails = Array.isArray(b.slotDetails) && b.slotDetails.length > 0;
+        const timeText = hasSlotDetails
+            ? b.slotDetails.map((s) => s.displayTime).join(', ')
+            : Array.isArray(b.timeSlots)
+                ? b.timeSlots.join(', ')
+                : b.displayTime ?? 'N/A';
+        const amountNumber = typeof b.totalRate === 'number' && !Number.isNaN(b.totalRate)
+            ? b.totalRate
+            : typeof b.rate === 'number'
+                ? b.rate
+                : 0;
+        const amount = Number(amountNumber).toFixed(2);
         return `
 <!DOCTYPE html>
 <html>
@@ -126,18 +152,21 @@ class EmailService {
   </style>
 </head>
 <body>
-  <div class="email-container">
-    <div class="logo">
-      <img
-  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABdwAAAH0CAIAAACo53h7AACAAElEQVR4nGz9Z3s...sqjoC+lBdLO2hDSFaaP9h53p3R6cJ6uKF18pEeJxyf3q2l/4FICHpMxWvYFnqkx"
-  alt="WallStreet Sport Logo"
-  style="max-width:600px;height:auto;"
-/>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
+    <tr>
+      <td align="center">
+        <img
+          src="https://houriji.xyz/wallstreet-logo.png"
+          alt="WallStreet Sport Logo"
+          style="max-width: 600px; height: auto;"
+        />
+      </td>
+    </tr>
+  </table>
 
-    </div>
-    
+  <div class="email-container">
     <div class="content">
-      <h2 style="color: #667eea;">Good day, ${booking.customerName}!</h2>
+      <h2 style="color: #667eea;">Good day, ${b.customerName}!</h2>
       
       <p>Thank you for booking with <strong>WallStreet Sport</strong>! This email is sent for your booking confirmation.</p>
       
@@ -146,7 +175,7 @@ class EmailService {
         
         <div class="detail-row">
           <span class="detail-label">Booking Reference:</span>
-          <span class="detail-value">${booking.bookingReference}</span>
+          <span class="detail-value">${b.bookingReference}</span>
         </div>
         
         <div class="detail-row">
@@ -156,7 +185,7 @@ class EmailService {
         
         <div class="detail-row">
           <span class="detail-label">Time:</span>
-          <span class="detail-value">${booking.displayTime}</span>
+          <span class="detail-value">${timeText}</span>
         </div>
         
         <div class="detail-row">
@@ -166,7 +195,7 @@ class EmailService {
         
         <div class="detail-row">
           <span class="detail-label">Amount:</span>
-          <span class="detail-value">PHP ${booking.rate}</span>
+          <span class="detail-value">PHP ${amount}</span>
         </div>
       </div>
       

@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Transaction } from './Transaction';
 
 @Entity('bookings')
@@ -19,20 +26,41 @@ export class Booking {
   @Column()
   phone: string;
 
-  // Booking details
+  // Booking date
   @Column({ type: 'date', name: 'booking_date' })
-  bookingDate: Date;
+  bookingDate: string | Date;
 
-  @Column({ name: 'time_slot' })
-  timeSlot: string;  
+  // 🔹 NEW: multi-slot support
+  @Column('text', { name: 'time_slots', array: true, nullable: true })
+  timeSlots: string[];
 
-  @Column({ name: 'display_time' })
+  @Column({ type: 'jsonb', name: 'slot_details', nullable: true })
+  slotDetails: {
+    time: string;
+    displayTime: string;
+    rate: number;
+    period: string;
+  }[];
+
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    name: 'total_rate',
+    default: 0,
+  })
+  totalRate: number;
+
+  // 🔸 Legacy single-slot fields (kept for backward compatibility)
+  @Column({ name: 'time_slot', nullable: true })
+  timeSlot: string;
+
+  @Column({ name: 'display_time', nullable: true })
   displayTime: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
   rate: number;
 
-  @Column()
+  @Column({ nullable: true })
   period: string;
 
   // Status
@@ -50,5 +78,7 @@ export class Booking {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @Column({ name: 'email_sent', default: false })
   emailSent: boolean;
 }

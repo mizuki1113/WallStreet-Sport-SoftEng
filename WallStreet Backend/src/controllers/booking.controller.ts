@@ -20,11 +20,20 @@ export async function getAvailableSlots(req: Request, res: Response, next: NextF
 
 export async function createBooking(req: Request, res: Response, next: NextFunction) {
   try {
-    const { name, email, contact, date, timeSlot } = req.body;
+    const { name, email, contact, date, timeSlot, timeSlots } = req.body;
 
-    // Validation
-    if (!name || !email || !contact || !date || !timeSlot) {
+    if (!name || !email || !contact || !date) {
       return res.status(400).json({ error: 'All fields required' });
+    }
+
+    // Normalise: prefer timeSlots array, fall back to single timeSlot
+    let normalizedSlots = Array.isArray(timeSlots) ? timeSlots : [];
+    if (!normalizedSlots.length && timeSlot) {
+      normalizedSlots = [timeSlot];
+    }
+
+    if (!normalizedSlots.length) {
+      return res.status(400).json({ error: 'Please select at least one time slot' });
     }
 
     const booking = await bookingService.createBooking({
@@ -32,7 +41,7 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
       email,
       contact,
       date,
-      timeSlot
+      timeSlots: normalizedSlots,
     });
 
     res.status(201).json(booking);
@@ -44,13 +53,11 @@ export async function createBooking(req: Request, res: Response, next: NextFunct
 export async function getAllBookings(req: Request, res: Response, next: NextFunction) {
   try {
     const bookings = await bookingService.getAllBookings();
-    
-    // Format for frontend
+
     const formatted = bookings.map(b => {
-      // PostgreSQL date type can return as string or Date
       let dateStr: string;
       const bookingDate = b.bookingDate as any;
-      
+
       if (typeof bookingDate === 'string') {
         dateStr = bookingDate.split('T')[0];
       } else if (bookingDate instanceof Date) {
@@ -59,26 +66,34 @@ export async function getAllBookings(req: Request, res: Response, next: NextFunc
         dateStr = String(bookingDate).split('T')[0];
       }
 
+      const timeSummary =
+        b.slotDetails && b.slotDetails.length > 0
+          ? b.slotDetails.map(s => s.displayTime).join(', ')
+          : b.displayTime;
+
+      const totalAmount = Number(b.totalRate ?? b.rate ?? 0);
+
       return {
         id: b.id,
         customerName: b.customerName,
         email: b.email,
         phone: b.phone,
         date: dateStr,
-        time: b.displayTime,
+        time: timeSummary,
         duration: '1 hour',
         paymentMethod: b.transactions?.[0]?.paymentMethod || 'GCash',
-        totalAmount: Number(b.rate),
+        totalAmount,
         status: b.status,
-        createdAt: b.createdAt instanceof Date 
-          ? b.createdAt.toISOString()
-          : String(b.createdAt),
+        createdAt:
+          b.createdAt instanceof Date
+            ? b.createdAt.toISOString()
+            : String(b.createdAt),
         transactions: b.transactions?.map(t => ({
           id: t.id,
           referenceNumber: t.referenceNumber,
           screenshotPath: t.screenshotPath,
-          status: t.status
-        }))
+          status: t.status,
+        })),
       };
     });
 

@@ -24,23 +24,29 @@ async function initiatePayment(req, res, next) {
     try {
         const { amount, booking } = req.body;
         if (!amount || !booking) {
-            return res.status(400).json({ error: 'Amount and booking details required' });
+            return res
+                .status(400)
+                .json({ error: 'Amount and booking details required' });
         }
-        // Create booking first
-        const newBooking = await bookingService.createBooking({
-            name: booking.name,
-            email: booking.email,
-            contact: booking.contact,
-            date: booking.date,
-            timeSlot: booking.timeSlot
+        // Must receive an array of selected time slots
+        if (!Array.isArray(booking.timeSlots) || booking.timeSlots.length === 0) {
+            return res
+                .status(400)
+                .json({ error: 'At least one time slot is required' });
+        }
+        // Let PaymentService handle booking creation + QR-code transaction
+        const paymentResult = await paymentService.initiatePayment({
+            amount,
+            booking: {
+                name: booking.name,
+                email: booking.email,
+                contact: booking.contact,
+                date: booking.date,
+                timeSlots: booking.timeSlots,
+            },
         });
-        // Initiate payment (returns QR code flow now, not external checkout)
-        const paymentResult = await paymentService.initiateQRCodePayment(newBooking.id, amount);
-        res.json({
-            bookingId: newBooking.id,
-            bookingReference: newBooking.bookingReference,
-            ...paymentResult
-        });
+        // paymentResult already contains bookingId, bookingReference, transactionId, etc.
+        res.json(paymentResult);
     }
     catch (err) {
         next(err);
@@ -51,12 +57,14 @@ async function uploadPaymentProof(req, res, next) {
         const { transactionId, referenceNumber } = req.body;
         const file = req.file;
         if (!transactionId || !referenceNumber || !file) {
-            return res.status(400).json({ error: 'Transaction ID, reference number, and screenshot required' });
+            return res.status(400).json({
+                error: 'Transaction ID, reference number, and screenshot required',
+            });
         }
         const txRepo = ormconfig_1.AppDataSource.getRepository(Transaction_1.Transaction);
         const transaction = await txRepo.findOne({
             where: { id: transactionId },
-            relations: ['booking']
+            relations: ['booking'],
         });
         if (!transaction) {
             return res.status(404).json({ error: 'Transaction not found' });
@@ -72,8 +80,8 @@ async function uploadPaymentProof(req, res, next) {
             transaction: {
                 id: transaction.id,
                 referenceNumber: transaction.referenceNumber,
-                status: transaction.status
-            }
+                status: transaction.status,
+            },
         });
     }
     catch (err) {
@@ -87,13 +95,15 @@ async function confirmPayment(req, res, next) {
         const txRepo = ormconfig_1.AppDataSource.getRepository(Transaction_1.Transaction);
         const transaction = await txRepo.findOne({
             where: { id: transactionId },
-            relations: ['booking']
+            relations: ['booking'],
         });
         if (!transaction) {
             return res.status(404).json({ error: 'Transaction not found' });
         }
         if (!transaction.referenceNumber || !transaction.screenshotPath) {
-            return res.status(400).json({ error: 'Payment proof not uploaded yet' });
+            return res
+                .status(400)
+                .json({ error: 'Payment proof not uploaded yet' });
         }
         // Update transaction as successful
         transaction.status = 'success';
@@ -117,7 +127,7 @@ async function confirmPayment(req, res, next) {
         res.json({
             success: true,
             message: 'Payment confirmed and email sent',
-            booking
+            booking,
         });
     }
     catch (err) {
