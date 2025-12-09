@@ -204,35 +204,30 @@ function Section() {
 
 function Heading2() {
   return (
-    <div className="absolute h-10 left-0 top-0 w-[1232.67px]" data-name="Heading">
-      <div className="absolute flex flex-col font-['Inter:Bold',_sans-serif] font-bold h-12 justify-center leading-[0] left-[616.33px] not-italic text-[30.6px] text-blue-900 text-center top-5 translate-x-[-50%] translate-y-[-50%] w-[612.76px]">
-        <p className="leading-[40px]">Affordable Rates, Prime Court Time.</p>
-      </div>
-    </div>
+    <h2 className="font-['Inter',_sans-serif] font-bold text-blue-900 text-2xl sm:text-3xl lg:text-[30.6px] leading-[1.3] text-center">
+      Affordable Rates, Prime Court Time.
+    </h2>
   );
 }
 
 function Paragraph1() {
   return (
-    <div className="absolute font-['Inter:Regular',_sans-serif] font-normal h-12 leading-[0] left-[280.33px] not-italic text-[13.6px] text-center text-gray-600 top-14 w-[672px]" data-name="Paragraph">
-      <div className="absolute flex flex-col h-[21.333px] justify-center left-[336px] top-3 translate-x-[-50%] translate-y-[-50%] w-[634.458px]">
-        <p className="leading-[24px]">{`Book your court time with ease. Whether you're planning a casual game with friends or an `}</p>
-      </div>
-      <div className="absolute flex flex-col h-[21.333px] justify-center left-[336px] top-9 translate-x-[-50%] translate-y-[-50%] w-[484.688px]">
-        <p className="leading-[24px]">intense training session, our courts are available at competitive rates.</p>
-      </div>
-    </div>
+    <p className="font-['Inter',_sans-serif] font-normal text-[13.6px] sm:text-sm text-gray-600 text-center mt-3">
+      Book your court time with ease. Whether you're planning a casual game with friends or an
+      intense training session, our courts are available at competitive rates.
+    </p>
   );
 }
 
-function Container9() {
+export function Container9() {
   return (
-    <div className="absolute h-[104px] left-4 top-0 w-[1232.67px]" data-name="Container">
+    <div className="w-full max-w-4xl mx-auto px-4 py-6 text-center">
       <Heading2 />
       <Paragraph1 />
     </div>
   );
 }
+
 
 function Heading3() {
   return (

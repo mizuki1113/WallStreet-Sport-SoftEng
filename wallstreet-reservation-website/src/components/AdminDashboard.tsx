@@ -151,33 +151,36 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-[48px] font-bold bg-gradient-to-r from-pink-400 to-purple-600 bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-400">WallStreet Sport Court Management</p>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            className="border-purple-500/30 bg-black border-gray-600 text-white hover:bg-gray-800"
-          >
-            <Clock className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="bg-red-500/30 border-red-500/30 text-white hover:bg-red-500/10 hover:text-white"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </div>
+{/* Header */}
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+  <div>
+    <h1 className="text-[40px] sm:text-[48px] font-bold bg-gradient-to-r from-pink-400 to-purple-600 bg-clip-text text-transparent leading-tight">
+      Admin Dashboard
+    </h1>
+    <p className="text-gray-400 mt-2">WallStreet Sport Court Management</p>
+  </div>
+
+  <div className="flex flex-wrap gap-3 sm:justify-end">
+    <Button
+      onClick={() => refetch()}
+      variant="outline"
+      className="border-purple-500/30 bg-black border-gray-600 text-white hover:bg-gray-800 flex items-center"
+    >
+      <Clock className="w-4 h-4 mr-2" />
+      Refresh
+    </Button>
+
+    <Button
+      onClick={handleLogout}
+      variant="outline"
+      className="bg-red-500/20 border-red-500/60 text-red-200 hover:bg-red-500/30 hover:text-white flex items-center rounded-full px-4"
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Logout
+    </Button>
+  </div>
+</div>
+
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
